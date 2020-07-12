@@ -1,6 +1,6 @@
 # rInject
 
-An annotation-first dependency injection library for Python 3.
+A flexible (annotations or keys) but simple dependency injection library for Python 3.
 
 
 ## Installation

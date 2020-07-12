@@ -7,7 +7,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="rInject",
-    description="An annotation-first dependency injection library for Python 3.",
+    description="A flexible (annotations or keys) but simple dependency injection library for Python 3.",
     long_description=readme,
     long_description_content_type="text/markdown",
     version="0.1.0",
