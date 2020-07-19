@@ -1,7 +1,7 @@
 import inspect
 import logging
-from typing import Callable, Hashable, Any
 from functools import partial
+from typing import Callable, Hashable, Any
 
 
 class Injector:
@@ -16,15 +16,18 @@ class Injector:
     def inject(self, injection_target: Callable, *args, _partial=False, **kwargs):
         assert callable(injection_target)
 
-        sig = inspect.signature(injection_target, follow_wrapped=True)
+        if inspect.isclass(injection_target):
+            sig = inspect.signature(injection_target.__init__, follow_wrapped=True)
+        else:
+            sig = inspect.signature(injection_target, follow_wrapped=True)
         bound_args = sig.bind_partial(*args, **kwargs)  #  type: inspect.BoundArguments
-        self._logger(f'bound args {bound_args.arguments}')
+        self._logger(f"bound args {bound_args.arguments}")
         for name, parameter in sig.parameters.items():
             if name in bound_args.arguments:
-                self._logger(f'parameter {name} = {bound_args.arguments}')
+                self._logger(f"parameter {name} = {bound_args.arguments}")
                 continue
 
-            self._logger(f'parameter {name} is not supplied, searching for a binding')
+            self._logger(f"parameter {name} is not supplied, searching for a binding")
             if parameter.annotation is not inspect.Signature.empty:
                 try:
                     value = self.resolve(parameter.annotation)
@@ -32,7 +35,7 @@ class Injector:
                     pass
                 else:
                     bound_args.arguments[name] = value
-                    self._logger(f'parameter {name} bound to annotation key {parameter.annotation} = {value}')
+                    self._logger(f"parameter {name} bound to annotation key {parameter.annotation} = {value}")
                     continue
 
             try:
@@ -41,13 +44,18 @@ class Injector:
                 pass
             else:
                 bound_args.arguments[name] = value
-                self._logger(f'parameter {name} bound to name key {name} = {value}')
+                self._logger(f"parameter {name} bound to name key {name} = {value}")
                 continue
 
-            if not (parameter.VAR_KEYWORD or parameter.VAR_POSITIONAL) and parameter.default is inspect.Signature.empty:
-                raise TypeError(f'injection target: {injection_target}, args={args}, kwargs={kwargs} could not match '
-                                f'parameter {parameter.name} with annotation {parameter.annotation} which '
-                                f'has no entry for either the name or annotation and no default value ')
+            if (
+                not (parameter.VAR_KEYWORD or parameter.VAR_POSITIONAL)
+                and parameter.default is inspect.Signature.empty
+            ):
+                raise TypeError(
+                    f"injection target: {injection_target}, args={args}, kwargs={kwargs} could not match "
+                    f"parameter {parameter.name} with annotation {parameter.annotation} which "
+                    f"has no entry for either the name or annotation and no default value "
+                )
 
         if _partial is True:
             return partial(injection_target, *bound_args.args, **bound_args.kwargs)
@@ -56,8 +64,10 @@ class Injector:
 
     def defer(self, func):
         """Wrap a call to inject so it can be deferred"""
+
         def wrap(*a, **kw):
             return self.inject(func, *a, **kw)
+
         return wrap
 
     def resolve(self, binding_key: Hashable) -> Any:
@@ -81,19 +91,19 @@ class Injector:
         A string key may also contain a double-underscore to indicate a get()
         """
         self._bindings[key] = provider
-        self._logger(f'{self} registered provider {key} = {provider}')
+        self._logger(f"{self} registered provider {key} = {provider}")
 
     def register_value(self, key: Hashable, value: Any):
         self._bindings[key] = ValueProvider(value)
-        self._logger(f'{self} registered ValueProvider {key} = {value}')
+        self._logger(f"{self} registered ValueProvider {key} = {value}")
 
     def register_factory(self, key: Hashable, factory: Callable):
         self._bindings[key] = FactoryProvider(factory)
-        self._logger(f'{self} registered FactoryProvider {key} = {factory}')
+        self._logger(f"{self} registered FactoryProvider {key} = {factory}")
 
     def register_instance(self, key: Hashable, factory: Callable):
         self._bindings[key] = InstanceProvider(factory)
-        self._logger(f'{self} registered InstanceProvider {key} = {factory}')
+        self._logger(f"{self} registered InstanceProvider {key} = {factory}")
 
 
 class FactoryProvider:
