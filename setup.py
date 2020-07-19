@@ -10,7 +10,7 @@ setup(
     description="A flexible (annotations or keys) but simple dependency injection library for Python 3.",
     long_description=readme,
     long_description_content_type="text/markdown",
-    version="0.1.0",
+    version="0.1.1",
     author="Steve McCartney",
     author_email="python@reconvergent.com",
     url="https://github.com/stevemccartney/rinject",
